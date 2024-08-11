@@ -32,7 +32,7 @@
             display: flex;
             gap: 20px;
             width: 100%;
-            max-width: 1400px;
+            max-width: 1600px;
         }
 
         #inputSection, #advancedOptions {
@@ -61,11 +61,17 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            flex: 3;
+            flex: 4; /* Increase the flex value to make the chart larger */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            max-width: 1200px; /* Increase the max width of the chart container */
+            width: 100%; /* Ensure the chart container takes up all available space */
+        }
+        canvas#myChart {
+            width: 100% !important; /* Ensure the canvas takes up the full width */
+            height: auto !important; /* Maintain aspect ratio */
         }
 
         label {
@@ -129,6 +135,33 @@
             cursor: pointer;
             margin-top: 5px;
         }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button-group button {
+            height: 40px !important;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            background-color: #f4be5a; /* Same background color for all buttons */
+            color: rgb(13, 12, 12);
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center; /* Center the text inside the button */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .button-group button:hover {
+            background-color: #f3d916;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.60);
+        }
+
+
 
         #advancedToggle {
             background-color: #28a745;
@@ -144,14 +177,7 @@
             margin-top: 10px;
         }
 
-        #saveButton {
-            background-color: #ffc107;
-            margin-top: 20px;
-        }
-
-        #saveButton:hover {
-            background-color: #e0a800;
-        }
+        
 
         @media (max-width: 1024px) {
             #container {
@@ -188,6 +214,7 @@
             #chartContainer {
                 max-width: 100%;
             }
+            
         }
     </style>
 </head>
@@ -220,6 +247,7 @@
                     <option value="doughnut">Doughnut Chart</option>
                     <option value="polarArea">Polar Area Chart</option>
                     <option value="radar">Radar Chart</option>
+                    
                 </select>
 
                 <div class="checkbox-group">
@@ -310,16 +338,32 @@
             <div class="options-group">
                 <label for="tooltipCustomization">Tooltip Customization:</label>
                 <textarea id="tooltipCustomization" rows="3" placeholder="Enter custom JavaScript function"></textarea>
+
+                <label for="tooltipExamples">Select Tooltip Example:</label>
+                <select id="tooltipExamples" onchange="insertTooltipExample()">
+                    <option value="">-- Select an example --</option>
+                    <option value="currency">Currency Format</option>
+                    <option value="growthRate">Growth Rate</option>
+                    <option value="threshold">High/Normal Value</option>
+                    <option value="datasetLabel">Dataset Label & Data</option>
+                    <option value="percentage">Percentage of Total</option>
+                </select>
             </div>
         </div>
 
         <div id="chartContainer">
-            <canvas id="myChart"></canvas>
-            <button id="saveButton" onclick="saveChartAsJPG()">Save Chart as JPG</button>
-        </div>
+          <canvas id="myChart"></canvas>
+          <div class="button-group">
+              <button onclick="applyRandomColors()">Random Color Scheme</button>
+              <button id="saveButton" onclick="saveChartAsPNG()">Save Chart as PNG</button>
+              <button id="savePDFButton" onclick="saveChartAsPDF()">Save Chart as PDF</button>
+          </div>
+      </div>
+      
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
 
     <script>
         let myChart = null;
@@ -346,6 +390,45 @@
     }
 }
 
+function insertTooltipExample() {
+    const tooltipExamples = document.getElementById('tooltipExamples');
+    const tooltipCustomization = document.getElementById('tooltipCustomization');
+
+    const examples = {
+        currency: `function(tooltipItem) {
+    const value = tooltipItem.formattedValue;
+    return tooltipItem.label + ': $' + value;
+}`,
+        growthRate: `function(tooltipItem) {
+    const dataset = tooltipItem.chart.data.datasets[0];
+    const currentValue = dataset.data[tooltipItem.dataIndex];
+    const previousValue = dataset.data[tooltipItem.dataIndex - 1] || currentValue;
+    const growthRate = ((currentValue - previousValue) / previousValue * 100).toFixed(2);
+    return tooltipItem.label + ': ' + currentValue + ' (Growth: ' + growthRate + '%)';
+}`,
+        threshold: `function(tooltipItem) {
+    const value = tooltipItem.formattedValue;
+    const message = value > 50 ? 'High Value!' : 'Normal Value';
+    return tooltipItem.label + ': ' + value + ' (' + message + ')';
+}`,
+        datasetLabel: `function(tooltipItem) {
+    const datasetLabel = tooltipItem.dataset.label;
+    const value = tooltipItem.formattedValue;
+    return datasetLabel + ' - ' + tooltipItem.label + ': ' + value;
+}`,
+        percentage: `function(tooltipItem) {
+    const dataset = tooltipItem.chart.data.datasets[0];
+    const total = dataset.data.reduce((sum, value) => sum + value, 0);
+    const currentValue = dataset.data[tooltipItem.dataIndex];
+    const percentage = ((currentValue / total) * 100).toFixed(2);
+    return tooltipItem.label + ': ' + currentValue + ' (' + percentage + '%)';
+}`
+    };
+
+    // Set the selected example in the textarea
+    tooltipCustomization.value = examples[tooltipExamples.value] || '';
+}
+
 
 function generateChart() {
     const errorMessage = document.getElementById('errorMessage');
@@ -357,7 +440,7 @@ function generateChart() {
         const yAxisTitle = document.getElementById('yAxisTitle').value;
         const xAxis = document.getElementById('xAxis').value.split(',');
         const yAxis = document.getElementById('yAxis').value.split(',').map(Number);
-        const chartType = document.getElementById('chartType').value;
+        let chartType = document.getElementById('chartType').value;
         const showLegend = document.getElementById('showLegend').checked;
         const showXAxis = document.getElementById('showXAxis').checked;
         const showYAxis = document.getElementById('showYAxis').checked;
@@ -397,6 +480,7 @@ function generateChart() {
             }]
         };
 
+        // Adjust for horizontal bar chart
         let options = {
             responsive: responsiveChart,
             maintainAspectRatio: responsiveChart,
@@ -412,11 +496,24 @@ function generateChart() {
                     left: 20
                 }
             },
+            indexAxis: chartType === 'horizontalBar' ? 'y' : 'x', // Adjust the axis for horizontal bar chart
             plugins: {
                 legend: {
                     display: showLegend,
                     position: 'top',
                     labels: {
+                        generateLabels: function(chart) {
+                            const data = chart.data.datasets[0];
+                            return chart.data.labels.map((label, i) => ({
+                                text: `${label}: ${data.data[i]}`,  // Custom label text showing the label and value
+                                fillStyle: data.backgroundColor[i],  // Use the correct background color for the legend
+                                strokeStyle: data.borderColor[i],    // Ensure the border color matches the background
+                                lineWidth: data.borderWidth,
+                                hidden: isNaN(data.data[i]),
+                                fontColor: fontColor,  // Apply font color
+                                index: i
+                            }));
+                        },
                         color: fontColor,
                         font: {
                             size: fontSize,
@@ -434,30 +531,37 @@ function generateChart() {
                     color: fontColor
                 },
                 tooltip: {
-                    enabled: true,
-                    callbacks: tooltipCustomization ? new Function('return ' + tooltipCustomization)() : {},
-                    bodyColor: fontColor,
-                    titleColor: fontColor,
-                    backgroundColor: backgroundColor,
-                    borderColor: borderColor,
-                    borderWidth: 1,
-                    titleFont: {
-                        size: fontSize,
-                        family: fontFamily
-                    },
-                    bodyFont: {
-                        size: fontSize,
-                        family: fontFamily
-                    }
-                },
+    enabled: true,
+    callbacks: {
+        label: tooltipCustomization ? new Function('return ' + tooltipCustomization)() : function(tooltipItem) {
+            return tooltipItem.label + ': ' + tooltipItem.formattedValue;
+        }
+    },
+    bodyColor: fontColor,
+    titleColor: fontColor,
+    backgroundColor: backgroundColor,
+    borderColor: borderColor,
+    borderWidth: 1,
+    titleFont: {
+        size: fontSize,
+        family: fontFamily
+    },
+    bodyFont: {
+        size: fontSize,
+        family: fontFamily
+    }
+},
                 datalabels: {
                     display: true,
                     color: fontColor,
-                    align: 'end',
-                    anchor: 'end',
+                    align: 'center',  // Center the labels inside the bars
+                    anchor: 'center', // Anchor the labels to the center of the bars
                     font: {
                         size: fontSize,
                         family: fontFamily
+                    },
+                    formatter: function(value) {
+                        return value;
                     }
                 }
             },
@@ -520,7 +624,7 @@ function generateChart() {
             type: chartType === 'horizontalBar' ? 'bar' : chartType,
             data: chartData,
             options: options,
-            plugins: [ChartDataLabels] // Add ChartDataLabels plugin to show values on top of bars
+            plugins: [ChartDataLabels]
         });
 
         document.getElementById('chartContainer').style.backgroundColor = backgroundColor;
@@ -530,34 +634,74 @@ function generateChart() {
     }
 }
 
+function applyRandomColors() {
+    const randomColor = () => `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    const colors = Array(myChart.data.datasets[0].data.length).fill(0).map(randomColor);
+    myChart.data.datasets[0].backgroundColor = colors;
+    myChart.data.datasets[0].borderColor = colors;
+    myChart.update();
+}
 
-        function saveChartAsJPG() {
-            if (!myChart) {
-                alert('Please generate a chart first.');
-                return;
-            }
 
-            const canvas = document.getElementById('myChart');
-            
-            // Create a new canvas with white background
-            const newCanvas = document.createElement('canvas');
-            newCanvas.width = canvas.width;
-            newCanvas.height = canvas.height;
-            const ctx = newCanvas.getContext('2d');
 
-            // Fill the background
-            ctx.fillStyle = document.getElementById('backgroundColor').value;
-            ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+function saveChartAsPNG() {
+    if (!myChart) {
+        alert('Please generate a chart first.');
+        return;
+    }
 
-            // Draw the original chart onto the new canvas
-            ctx.drawImage(canvas, 0, 0);
+    const canvas = document.getElementById('myChart');
 
-            const imageData = newCanvas.toDataURL('image/jpeg', 1.0);
-            const link = document.createElement('a');
-            link.download = 'chart.jpg';
-            link.href = imageData;
-            link.click();
-        }
+    // Set desired resolution scale (e.g., 2 for 2x resolution)
+    const scale = 1; 
+    const newCanvas = document.createElement('canvas');
+    newCanvas.width = canvas.width * scale;
+    newCanvas.height = canvas.height * scale;
+    const ctx = newCanvas.getContext('2d');
+
+    // Apply scaling for higher resolution
+    ctx.scale(scale, scale);
+
+    // Fill the background
+    ctx.fillStyle = document.getElementById('backgroundColor').value;
+    ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+    // Draw the original chart onto the new canvas with scaling
+    ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+
+    const imageData = newCanvas.toDataURL('image/png', 1.0);
+    const link = document.createElement('a');
+    link.download = 'chart.png';
+    link.href = imageData;
+    link.click();
+}
+function saveChartAsPDF() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('landscape'); // Create a new jsPDF object in landscape mode
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const canvas = document.getElementById('myChart');
+    const imgData = canvas.toDataURL('image/png');
+
+    // Desired width and height for the image in the PDF
+    const imgWidth = pageWidth * 0.9; // 80% of the page width
+    const imgHeight = canvas.height * (imgWidth / canvas.width); // Keep the aspect ratio
+
+    // Calculate X and Y coordinates to center the image
+    const x = (pageWidth - imgWidth) / 2;
+    const y = (pageHeight - imgHeight) / 2;
+
+    // Add the image to the PDF at the calculated position and size
+    pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+
+    // Save the PDF
+    pdf.save('chart.pdf');
+}
+
+
+
 
         // Initialize chart on page load
         document.addEventListener('DOMContentLoaded', function() {
