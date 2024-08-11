@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #495057;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #343a40;
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 60px;
+            width: 100%;
+        }
+
+        #container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        #inputSection, #advancedOptions {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex: 1;
+        }
+
+        #inputSection {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        #advancedOptions {
+            display: none;
+            flex: 2;
+            max-width: 300px;
+        }
+
+        #chartContainer {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        label {
+            font-weight: 500;
+            margin-top: 10px;
+            color: #6c757d;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .options-group {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f1f3f5;
+            border-radius: 5px;
+        }
+
+        .color-picker {
+            width: 60px;
+            height: 35px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        #advancedToggle {
+            background-color: #28a745;
+        }
+
+        #advancedToggle:hover {
+            background-color: #218838;
+        }
+
+        #errorMessage {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        #saveButton {
+            background-color: #ffc107;
+            margin-top: 20px;
+        }
+
+        #saveButton:hover {
+            background-color: #e0a800;
+        }
+
+        @media (max-width: 1024px) {
+            #container {
+                flex-direction: column;
+            }
+
+            #advancedOptions {
+                max-width: 100%;
+                flex: 1;
+                margin-top: 20px;
+                display: block;
+            }
+
+            #chartContainer {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #container {
+                flex-direction: column;
+            }
+
+            body {
+                padding: 10px;
+                height: auto;
+            }
+
+            #advancedOptions {
+                display: block;
+                max-width: 100%;
+            }
+
+            #chartContainer {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Chart Generator</h1>
+    <div id="container">
+        <div id="inputSection">
+            <div>
+                <label for="chartTitle">Chart Title:</label>
+                <input type="text" id="chartTitle" placeholder="Enter chart title">
+
+                <label for="xAxisTitle">X-Axis Title:</label>
+                <input type="text" id="xAxisTitle" placeholder="Enter x-axis title">
+
+                <label for="yAxisTitle">Y-Axis Title:</label>
+                <input type="text" id="yAxisTitle" placeholder="Enter y-axis title">
+
+                <label for="xAxis">X-Axis Values (comma-separated):</label>
+                <input type="text" id="xAxis" placeholder="e.g. Jan,Feb,Mar,Apr,May">
+                
+                <label for="yAxis">Y-Axis Values (comma-separated):</label>
+                <input type="text" id="yAxis" placeholder="e.g. 10,20,15,25,30">
+                
+                <label for="chartType">Chart Type:</label>
+                <select id="chartType">
+                    <option value="bar">Bar Chart</option>
+                    <option value="horizontalBar">Horizontal Bar Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="doughnut">Doughnut Chart</option>
+                    <option value="polarArea">Polar Area Chart</option>
+                    <option value="radar">Radar Chart</option>
+                </select>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showLegend" checked>
+                    <label for="showLegend">Show Legend</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showXAxis" checked>
+                    <label for="showXAxis">Show X-Axis</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showYAxis" checked>
+                    <label for="showYAxis">Show Y-Axis</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showGrid" checked>
+                    <label for="showGrid">Show Grid</label>
+                </div>
+            </div>
+            <div>
+                <button id="advancedToggle" onclick="toggleAdvancedOptions()">Toggle Advanced Options</button>
+                <button onclick="generateChart()">Generate Chart</button>
+            </div>
+            <div id="errorMessage"></div>
+        </div>
+
+        <div id="advancedOptions" style="display: none;">
+            <div class="options-group">
+                <label for="backgroundColor">Background Color:</label>
+                <input type="color" id="backgroundColor" class="color-picker" value="#ffffff">
+            </div>
+
+            <div class="options-group">
+                <label for="borderColor">Border Color:</label>
+                <input type="color" id="borderColor" class="color-picker" value="#000000">
+            </div>
+
+            <div class="options-group">
+                <label for="borderWidth">Border Width:</label>
+                <input type="number" id="borderWidth" min="0" max="10" value="1">
+            </div>
+
+            <div class="options-group">
+                <label for="fontFamily">Font Family:</label>
+                <select id="fontFamily">
+                    <option value="Roboto, sans-serif">Roboto</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="Helvetica, sans-serif">Helvetica</option>
+                    <option value="Times New Roman, serif">Times New Roman</option>
+                    <option value="Courier New, monospace">Courier New</option>
+                    <option value="Georgia, serif">Georgia</option>
+                </select>
+            </div>
+
+            <div class="options-group">
+                <label for="fontSize">Font Size:</label>
+                <input type="number" id="fontSize" min="8" max="24" value="12">
+            </div>
+
+            <div class="options-group">
+                <label for="fontColor">Font Color:</label>
+                <input type="color" id="fontColor" class="color-picker" value="#000000">
+            </div>
+
+            <div class="options-group">
+                <label for="animation">Animation Duration (ms):</label>
+                <input type="number" id="animation" min="0" max="5000" value="1000">
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="responsiveChart" checked>
+                <label for="responsiveChart">Responsive Chart</label>
+            </div>
+
+            <div class="options-group">
+                <label for="aspectRatio">Aspect Ratio:</label>
+                <input type="number" id="aspectRatio" min="0.1" max="5" step="0.1" value="2">
+            </div>
+
+            <div class="options-group">
+                <label for="customColors">Custom Colors (comma-separated):</label>
+                <input type="text" id="customColors" placeholder="e.g. #ff0000,#00ff00,#0000ff">
+            </div>
+
+            <div class="options-group">
+                <label for="tooltipCustomization">Tooltip Customization:</label>
+                <textarea id="tooltipCustomization" rows="3" placeholder="Enter custom JavaScript function"></textarea>
+            </div>
+        </div>
+
+        <div id="chartContainer">
+            <canvas id="myChart"></canvas>
+            <button id="saveButton" onclick="saveChartAsJPG()">Save Chart as JPG</button>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+
+    <script>
+        let myChart = null;
+
+        const defaultPastelColors = [
+            'rgba(255, 179, 186, 0.8)',
+            'rgba(255, 223, 186, 0.8)',
+            'rgba(255, 255, 186, 0.8)',
+            'rgba(186, 255, 201, 0.8)',
+            'rgba(186, 225, 255, 0.8)',
+            'rgba(223, 186, 255, 0.8)',
+            'rgba(255, 186, 255, 0.8)',
+            'rgba(255, 186, 223, 0.8)',
+            'rgba(186, 255, 255, 0.8)',
+            'rgba(236, 236, 236, 0.8)'
+        ];
+
+        function toggleAdvancedOptions() {
+    const advancedOptions = document.getElementById('advancedOptions');
+    if (advancedOptions.style.display === 'none' || advancedOptions.style.display === '') {
+        advancedOptions.style.display = 'block';
+    } else {
+        advancedOptions.style.display = 'none';
+    }
+}
+
+
+function generateChart() {
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = '';
+
+    try {
+        const chartTitle = document.getElementById('chartTitle').value;
+        const xAxisTitle = document.getElementById('xAxisTitle').value;
+        const yAxisTitle = document.getElementById('yAxisTitle').value;
+        const xAxis = document.getElementById('xAxis').value.split(',');
+        const yAxis = document.getElementById('yAxis').value.split(',').map(Number);
+        const chartType = document.getElementById('chartType').value;
+        const showLegend = document.getElementById('showLegend').checked;
+        const showXAxis = document.getElementById('showXAxis').checked;
+        const showYAxis = document.getElementById('showYAxis').checked;
+        const showGrid = document.getElementById('showGrid').checked;
+        const backgroundColor = document.getElementById('backgroundColor').value;
+        const borderColor = document.getElementById('borderColor').value;
+        const borderWidth = parseInt(document.getElementById('borderWidth').value);
+        const fontFamily = document.getElementById('fontFamily').value;
+        const fontSize = parseInt(document.getElementById('fontSize').value);
+        const fontColor = document.getElementById('fontColor').value;
+        const animation = parseInt(document.getElementById('animation').value);
+        const responsiveChart = document.getElementById('responsiveChart').checked;
+        const aspectRatio = parseFloat(document.getElementById('aspectRatio').value);
+        const customColors = document.getElementById('customColors').value.split(',').filter(Boolean);
+        const tooltipCustomization = document.getElementById('tooltipCustomization').value;
+
+        if (xAxis.length !== yAxis.length) {
+            throw new Error('X-Axis and Y-Axis must have the same number of values');
+        }
+
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        
+        const colors = customColors.length > 0 ? customColors : defaultPastelColors.slice(0, yAxis.length);
+
+        let chartData = {
+            labels: xAxis,
+            datasets: [{
+                label: yAxisTitle || 'Values',
+                data: yAxis,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: borderWidth
+            }]
+        };
+
+        let options = {
+            responsive: responsiveChart,
+            maintainAspectRatio: responsiveChart,
+            aspectRatio: aspectRatio,
+            animation: {
+                duration: animation
+            },
+            layout: {
+                padding: {
+                    top: 40,
+                    right: 20,
+                    bottom: 20,
+                    left: 20
+                }
+            },
+            plugins: {
+                legend: {
+                    display: showLegend,
+                    position: 'top',
+                    labels: {
+                        color: fontColor,
+                        font: {
+                            size: fontSize,
+                            family: fontFamily
+                        }
+                    }
+                },
+                title: {
+                    display: !!chartTitle,
+                    text: chartTitle,
+                    font: {
+                        size: fontSize + 4,
+                        family: fontFamily
+                    },
+                    color: fontColor
+                },
+                tooltip: {
+                    enabled: true,
+                    callbacks: tooltipCustomization ? new Function('return ' + tooltipCustomization)() : {},
+                    bodyColor: fontColor,
+                    titleColor: fontColor,
+                    backgroundColor: backgroundColor,
+                    borderColor: borderColor,
+                    borderWidth: 1,
+                    titleFont: {
+                        size: fontSize,
+                        family: fontFamily
+                    },
+                    bodyFont: {
+                        size: fontSize,
+                        family: fontFamily
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    color: fontColor,
+                    align: 'end',
+                    anchor: 'end',
+                    font: {
+                        size: fontSize,
+                        family: fontFamily
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: showXAxis,
+                    grid: {
+                        display: showGrid,
+                        color: fontColor
+                    },
+                    title: {
+                        display: !!xAxisTitle,
+                        text: xAxisTitle,
+                        font: {
+                            size: fontSize,
+                            family: fontFamily
+                        },
+                        color: fontColor
+                    },
+                    ticks: {
+                        font: {
+                            size: fontSize,
+                            family: fontFamily
+                        },
+                        color: fontColor
+                    }
+                },
+                y: {
+                    display: showYAxis,
+                    beginAtZero: true,
+                    grid: {
+                        display: showGrid,
+                        color: fontColor
+                    },
+                    title: {
+                        display: !!yAxisTitle,
+                        text: yAxisTitle,
+                        font: {
+                            size: fontSize,
+                            family: fontFamily
+                        },
+                        color: fontColor
+                    },
+                    ticks: {
+                        font: {
+                            size: fontSize,
+                            family: fontFamily
+                        },
+                        color: fontColor
+                    }
+                }
+            }
+        };
+
+        if (['pie', 'doughnut', 'polarArea'].includes(chartType)) {
+            delete options.scales;
+        }
+
+        myChart = new Chart(ctx, {
+            type: chartType === 'horizontalBar' ? 'bar' : chartType,
+            data: chartData,
+            options: options,
+            plugins: [ChartDataLabels] // Add ChartDataLabels plugin to show values on top of bars
+        });
+
+        document.getElementById('chartContainer').style.backgroundColor = backgroundColor;
+    } catch (error) {
+        errorMessage.textContent = `Error: ${error.message}`;
+        console.error('Chart generation error:', error);
+    }
+}
+
+
+        function saveChartAsJPG() {
+            if (!myChart) {
+                alert('Please generate a chart first.');
+                return;
+            }
+
+            const canvas = document.getElementById('myChart');
+            
+            // Create a new canvas with white background
+            const newCanvas = document.createElement('canvas');
+            newCanvas.width = canvas.width;
+            newCanvas.height = canvas.height;
+            const ctx = newCanvas.getContext('2d');
+
+            // Fill the background
+            ctx.fillStyle = document.getElementById('backgroundColor').value;
+            ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+            // Draw the original chart onto the new canvas
+            ctx.drawImage(canvas, 0, 0);
+
+            const imageData = newCanvas.toDataURL('image/jpeg', 1.0);
+            const link = document.createElement('a');
+            link.download = 'chart.jpg';
+            link.href = imageData;
+            link.click();
+        }
+
+        // Initialize chart on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            generateChart();
+        });
+    </script>
+</body>
+</html>
